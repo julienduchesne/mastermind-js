@@ -24,7 +24,7 @@ function create() {
   this.tweens.add({
     targets: logo,
     y: 450,
-    duration: 2000,
+    duration: 200,
     ease: "Power2",
     yoyo: true,
     loop: -1
