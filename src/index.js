@@ -1,32 +1,37 @@
-import Phaser from "phaser";
-import logoImg from "./assets/logo.png";
+import Phaser, { Game } from "phaser";
+import InputTextPlugin from 'phaser3-rex-plugins/plugins/inputtext-plugin.js';
+import WebFontLoaderPlugin from 'phaser3-rex-plugins/plugins/webfontloader-plugin.js';
+import ConfigScene from "./scenes/config";
+import GameScene from "./scenes/game";
+import SplashScene from "./scenes/splash";
 
 const config = {
   type: Phaser.AUTO,
-  parent: "phaser-example",
-  width: 800,
-  height: 600,
-  scene: {
-    preload: preload,
-    create: create
-  }
+  scale: {
+    parent: "mastermind",
+    mode: Phaser.Scale.FIT,
+    autoCenter: Phaser.Scale.CENTER_BOTH,
+    width: 900,
+    height: 900
+  },
+  dom: {
+    createContainer: true
+  },
+  plugins: {
+    global: [
+      {
+        key: 'rexInputTextPlugin',
+        plugin: InputTextPlugin,
+        start: true
+      },
+      {
+        key: 'rexWebFontLoader',
+        plugin: WebFontLoaderPlugin,
+        start: true
+      }
+    ]
+  },
+  scene: [SplashScene, ConfigScene, GameScene]
 };
 
 const game = new Phaser.Game(config);
-
-function preload() {
-  this.load.image("logo", logoImg);
-}
-
-function create() {
-  const logo = this.add.image(400, 150, "logo");
-
-  this.tweens.add({
-    targets: logo,
-    y: 450,
-    duration: 200,
-    ease: "Power2",
-    yoyo: true,
-    loop: -1
-  });
-}
