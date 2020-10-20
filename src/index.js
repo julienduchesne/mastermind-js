@@ -4,9 +4,14 @@ import WebFontLoaderPlugin from 'phaser3-rex-plugins/plugins/webfontloader-plugi
 import ConfigScene from "./scenes/config";
 import GameScene from "./scenes/game";
 import SplashScene from "./scenes/splash";
+import {
+  CIRCLE_COLORS,
+  PALETTE
+} from "./colors";
 
 const config = {
   type: Phaser.AUTO,
+  backgroundColor: Phaser.Display.Color.HexStringToColor(PALETTE.background),
   scale: {
     parent: "mastermind",
     mode: Phaser.Scale.FIT,

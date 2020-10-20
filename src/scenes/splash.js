@@ -11,15 +11,15 @@ export default class SplashScene extends Phaser.Scene {
     }
 
     preload() {
+        // Loaded for all future pages
         this.load.rexWebFont({
             google: {
                 families: ['Bangers']
             }
         });
     }
-    create() {
-        this.cameras.main.setBackgroundColor(PALETTE.background);
 
+    create() {
         // Create circle of balls
         this.ballGroup = this.add.group();
         this.circleRadius = 350;

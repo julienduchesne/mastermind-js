@@ -29,17 +29,8 @@ export default class ConfigScene extends Phaser.Scene {
         return group;
     }
 
-    preload() {
-        this.load.rexWebFont({
-            google: {
-                families: ['Bangers']
-            }
-        });
-    }
-
-
+    preload() { }
     create() {
-        this.cameras.main.setBackgroundColor(PALETTE.background);
         var halfWidth = this.cameras.main.width / 2;
         this.add.text(halfWidth, 100, 'Configuration').setColor(PALETTE.dark).setFontSize(52).setOrigin(0.5).setFontFamily("Bangers").setPadding(10, 10);
 
