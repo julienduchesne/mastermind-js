@@ -10,15 +10,12 @@ import {
 } from "./colors";
 
 const config = {
+  title: "Mastermind Phaser",
+  url: "https://julienduchesne.github.io/mastermind-phaser/",
+
   type: Phaser.AUTO,
   backgroundColor: Phaser.Display.Color.HexStringToColor(PALETTE.background),
-  scale: {
-    parent: "mastermind",
-    mode: Phaser.Scale.FIT,
-    autoCenter: Phaser.Scale.CENTER_BOTH,
-    width: 900,
-    height: 900
-  },
+  disableContextMenu: true,
   dom: {
     createContainer: true
   },
@@ -35,6 +32,13 @@ const config = {
         start: true
       }
     ]
+  },
+  scale: {
+    parent: "mastermind",
+    mode: Phaser.Scale.FIT,
+    autoCenter: Phaser.Scale.CENTER_BOTH,
+    width: 900,
+    height: 900
   },
   scene: [SplashScene, ConfigScene, GameScene]
 };
