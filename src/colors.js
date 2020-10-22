@@ -2,7 +2,8 @@ export const PALETTE = {
     background: "#e8ded2",
     light: "#a3d2ca",
     medium: "#5eaaa8",
-    dark: "#056676"
+    dark: "#056676",
+    emptyCirle: "#d3d3d3"
 };
 
 
@@ -19,4 +20,4 @@ export const CIRCLE_COLORS = [
     "#e65fff",
     "#aaaaaa",
     "#e9e9cb"
-]
+];

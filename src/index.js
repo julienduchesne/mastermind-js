@@ -1,6 +1,4 @@
 import Phaser, { Game } from "phaser";
-import InputTextPlugin from 'phaser3-rex-plugins/plugins/inputtext-plugin.js';
-import WebFontLoaderPlugin from 'phaser3-rex-plugins/plugins/webfontloader-plugin.js';
 import ConfigScene from "./scenes/config";
 import GameScene from "./scenes/game";
 import SplashScene from "./scenes/splash";
@@ -8,6 +6,10 @@ import {
   CIRCLE_COLORS,
   PALETTE
 } from "./colors";
+
+import InputTextPlugin from 'phaser3-rex-plugins/plugins/inputtext-plugin.js';
+import UIPlugin from 'phaser3-rex-plugins/templates/ui/ui-plugin.js';
+import WebFontLoaderPlugin from 'phaser3-rex-plugins/plugins/webfontloader-plugin.js';
 
 const config = {
   title: "Mastermind Phaser",
@@ -31,6 +33,13 @@ const config = {
         plugin: WebFontLoaderPlugin,
         start: true
       }
+    ],
+    scene: [
+      {
+        key: 'rexUI',
+        plugin: UIPlugin,
+        mapping: 'rexUI'
+      },
     ]
   },
   scale: {
