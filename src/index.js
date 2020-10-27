@@ -19,7 +19,7 @@ const config = {
   backgroundColor: Phaser.Display.Color.HexStringToColor(PALETTE.background),
   disableContextMenu: true,
   dom: {
-    createContainer: true
+    createContainer: false
   },
   plugins: {
     global: [
