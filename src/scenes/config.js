@@ -10,10 +10,12 @@ export default class ConfigScene extends Phaser.Scene {
         super('ConfigScene');
     }
 
-
-
     configText(x, y, text) {
-        return this.add.text(x, y, text).setColor(PALETTE.medium).setFontSize(30).setFontFamily("Bangers").setPadding(5, 5).setOrigin(0, 0.5);
+        return this.add.text(x, y, text, {
+            color: PALETTE.medium,
+            fontSize: 30,
+            fontFamily: "Bangers",
+        }).setPadding(5, 5).setOrigin(0, 0.5);
     }
 
     drawCircles(count, x, y, width, colors = true) {
@@ -62,6 +64,4 @@ export default class ConfigScene extends Phaser.Scene {
             this.scene.scene.start("GameScene", { colorCount: parseInt(colorCountText.text), circleCount: parseInt(circleCountText.text) })
         });
     }
-
-
 }
