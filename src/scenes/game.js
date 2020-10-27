@@ -2,7 +2,9 @@ import {
     CIRCLE_COLORS,
     PALETTE
 } from "../colors";
+
 import Anchor from 'phaser3-rex-plugins/plugins/anchor.js';
+import FadeOutDestroy from 'phaser3-rex-plugins/plugins/fade-out-destroy.js';
 
 var spaceBetweenItems = 20;
 var spaceBetweenLines = 40;
@@ -97,9 +99,25 @@ export default class GameScene extends Phaser.Scene {
 
             // Game circles
             for (var j = 0; j < this.circleCount; j++) {
-                sizer.add(
-                    this.add.circle(0, 0, circleRadius, Phaser.Display.Color.HexStringToColor(PALETTE.emptyCirle).color).setStrokeStyle(1, PALETTE.dark)
-                );
+                var circle = this.add.circle(0, 0, circleRadius, Phaser.Display.Color.HexStringToColor(PALETTE.emptyCirle).color).setStrokeStyle(1, PALETTE.dark);
+                if (this.currentRow == i) {
+                    circle.setInteractive().on("pointerdown", function (pointer) {
+                        if (scene.currentDialog !== undefined) {
+                            return;
+                        }
+                        // Darken the screen. When clicking that background, kill the dialog
+                        scene.add.rectangle(scene.cameras.main.width / 2, scene.cameras.main.height / 2, scene.cameras.main.width, scene.cameras.main.height, 0x000000, 0.75)
+                            .setInteractive().on("pointerdown", function (pointer) {
+                                if (!scene.currentDialog.isInTouching(pointer)) {
+                                    FadeOutDestroy(this, 100);
+                                    scene.currentDialog.scaleDownDestroy(100);
+                                    scene.currentDialog = undefined;
+                                }
+                            });
+                        scene.currentDialog = scene.createColorSelectionDialog(this.x, this.y, function (color) { alert(color); });
+                    });
+                }
+                sizer.add(circle);
             }
 
             // Submit button
@@ -115,6 +133,68 @@ export default class GameScene extends Phaser.Scene {
             );
         }
         return sizer
+    }
+
+
+    createColorSelectionDialog(x, y, onClick) {
+        var dialog = this.rexUI.add.dialog({
+            x: x,
+            y: y,
+
+            background: this.rexUI.add.roundRectangle(0, 0, 100, 100, 20, Phaser.Display.Color.HexStringToColor(PALETTE.background).color),
+
+            title: this.rexUI.add.label({
+                text: this.add.text(0, 0, "Pick a color ", {
+                    fontSize: 30,
+                    fontFamily: "Bangers",
+                    color: PALETTE.dark,
+                }),
+                space: {
+                    left: 15,
+                    right: 15,
+                    top: 5,
+                    bottom: 5
+                }
+            }),
+
+            actions: [
+                this.rexUI.add.roundRectangle(0, 0, 0, 0, 20, 0xe91e63),
+                this.rexUI.add.roundRectangle(0, 0, 0, 0, 20, 0x673ab7),
+                this.rexUI.add.roundRectangle(0, 0, 0, 0, 20, 0x2196f3),
+                this.rexUI.add.roundRectangle(0, 0, 0, 0, 20, 0x00bcd4),
+                this.rexUI.add.roundRectangle(0, 0, 0, 0, 20, 0x4caf50),
+                this.rexUI.add.roundRectangle(0, 0, 0, 0, 20, 0xcddc39),
+            ],
+
+            actionsAlign: 'left',
+
+            space: {
+                title: 10,
+                action: 5,
+
+                left: 10,
+                right: 10,
+                top: 10,
+                bottom: 10,
+            }
+        })
+            .layout()
+            .pushIntoBounds()
+            //.drawBounds(this.add.graphics(), 0xff0000)
+            .popUp(500);
+
+        dialog
+            .on('button.click', function (button, groupName, index) {
+                onClick(button.fillColor);
+            })
+            .on('button.over', function (button, groupName, index) {
+                button.setStrokeStyle(2, 0xffffff);
+            })
+            .on('button.out', function (button, groupName, index) {
+                button.setStrokeStyle();
+            });
+
+        return dialog;
     }
 }
 
