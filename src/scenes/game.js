@@ -101,21 +101,28 @@ export default class GameScene extends Phaser.Scene {
             for (var j = 0; j < this.circleCount; j++) {
                 var circle = this.add.circle(0, 0, circleRadius, Phaser.Display.Color.HexStringToColor(PALETTE.emptyCirle).color).setStrokeStyle(1, PALETTE.dark);
                 if (this.currentRow == i) {
-                    circle.setInteractive().on("pointerdown", function (pointer) {
-                        if (scene.currentDialog !== undefined) {
-                            return;
-                        }
-                        // Darken the screen. When clicking that background, kill the dialog
-                        scene.add.rectangle(scene.cameras.main.width / 2, scene.cameras.main.height / 2, scene.cameras.main.width, scene.cameras.main.height, 0x000000, 0.75)
-                            .setInteractive().on("pointerdown", function (pointer) {
-                                if (!scene.currentDialog.isInTouching(pointer)) {
-                                    FadeOutDestroy(this, 100);
-                                    scene.currentDialog.scaleDownDestroy(100);
-                                    scene.currentDialog = undefined;
-                                }
+                    circle.setInteractive().on("pointerdown", (function (parent) {
+                        return function () {
+                            if (scene.currentDialog !== undefined) {
+                                return;
+                            }
+                            // Darken the screen. When clicking that background, kill the dialog
+                            scene.currentDialogBackground = scene.add.rectangle(scene.cameras.main.width / 2, scene.cameras.main.height / 2, scene.cameras.main.width, scene.cameras.main.height, 0x000000, 0.75)
+                                .setInteractive().on("pointerdown", function (pointer) {
+                                    if (!scene.currentDialog.isInTouching(pointer)) {
+                                        FadeOutDestroy(scene.currentDialogBackground, 100);
+                                        scene.currentDialog.scaleDownDestroy(100);
+                                        scene.currentDialog = undefined;
+                                    }
+                                });
+                            scene.currentDialog = scene.createColorSelectionDialog(this.x, this.y, function (color) {
+                                parent.setFillStyle(color);
+                                FadeOutDestroy(scene.currentDialogBackground, 100);
+                                scene.currentDialog.scaleDownDestroy(100);
+                                scene.currentDialog = undefined;
                             });
-                        scene.currentDialog = scene.createColorSelectionDialog(this.x, this.y, function (color) { alert(color); });
-                    });
+                        }
+                    })(circle));
                 }
                 sizer.add(circle);
             }
@@ -137,6 +144,7 @@ export default class GameScene extends Phaser.Scene {
 
 
     createColorSelectionDialog(x, y, onClick) {
+        var scene = this;
         var dialog = this.rexUI.add.dialog({
             x: x,
             y: y,
@@ -157,14 +165,13 @@ export default class GameScene extends Phaser.Scene {
                 }
             }),
 
-            actions: [
-                this.rexUI.add.roundRectangle(0, 0, 0, 0, 20, 0xe91e63),
-                this.rexUI.add.roundRectangle(0, 0, 0, 0, 20, 0x673ab7),
-                this.rexUI.add.roundRectangle(0, 0, 0, 0, 20, 0x2196f3),
-                this.rexUI.add.roundRectangle(0, 0, 0, 0, 20, 0x00bcd4),
-                this.rexUI.add.roundRectangle(0, 0, 0, 0, 20, 0x4caf50),
-                this.rexUI.add.roundRectangle(0, 0, 0, 0, 20, 0xcddc39),
-            ],
+            actions: function (colors) {
+                var colorCircles = [];
+                for (var i = 0; i < colors.length; i++) {
+                    colorCircles.push(scene.add.circle(0, 0, 20, Phaser.Display.Color.HexStringToColor(colors[i]).color));
+                }
+                return colorCircles
+            }(this.colors),
 
             actionsAlign: 'left',
 
@@ -180,7 +187,6 @@ export default class GameScene extends Phaser.Scene {
         })
             .layout()
             .pushIntoBounds()
-            //.drawBounds(this.add.graphics(), 0xff0000)
             .popUp(500);
 
         dialog
