@@ -6,22 +6,23 @@ import {
 import Anchor from 'phaser3-rex-plugins/plugins/anchor.js';
 import FadeOutDestroy from 'phaser3-rex-plugins/plugins/fade-out-destroy.js';
 
-var spaceBetweenItems = 20;
-var spaceBetweenLines = 40;
-var itemWidth = 40;
-var circleRadius = itemWidth / 2;
-var rowHeight = 2 * spaceBetweenItems + 2 * circleRadius;
+var SPACE_BETWEEN_ITEMS = 20;
+var SPACE_BETWEEN_LINES = 40;
+var ITEM_WIDTH = 40;
+var CIRCLE_RADIUS = ITEM_WIDTH / 2;
+var ROW_HEIGHT = 2 * SPACE_BETWEEN_ITEMS + 2 * CIRCLE_RADIUS;
 
 export default class GameScene extends Phaser.Scene {
     constructor() {
         super('GameScene');
-        this.currentRow = 0;
     }
 
     preload() {
+        this.currentRow = 0;
         this.colorCount = this.scene.settings.data["colorCount"];
         this.colors = CIRCLE_COLORS.slice(0, this.colorCount);
         this.circleCount = this.scene.settings.data["circleCount"];
+        this.gameState = {};
     }
 
     create() {
@@ -36,9 +37,21 @@ export default class GameScene extends Phaser.Scene {
             { right: "right-50", top: "top+10" }
         );
 
+        this.drawPanel(null);
+    }
 
-        var numberOfInitialRows = Math.floor(((this.cameras.main.height - 100) / rowHeight));
-        var scrollablePanel = this.rexUI.add.scrollablePanel({
+    drawPanel(rowCount) {
+        if (this.scrollablePanel !== undefined) {
+            this.scrollablePanel.destroy();
+        }
+
+        var numberOfInitialRows = Math.floor(((this.cameras.main.height - 100) / ROW_HEIGHT));
+        if (rowCount == null) {
+            rowCount = numberOfInitialRows;
+        }
+        var shouldScroll = rowCount > numberOfInitialRows;
+
+        this.scrollablePanel = this.rexUI.add.scrollablePanel({
             anchor: {
                 centerX: "center",
                 bottom: "bottom+0"
@@ -47,17 +60,15 @@ export default class GameScene extends Phaser.Scene {
             scrollMode: 0,
             background: this.rexUI.add.roundRectangle(0, 0, 2, 2, 10, Phaser.Display.Color.HexStringToColor(PALETTE.background).color),
             panel: {
-                child: this.createGrid(numberOfInitialRows),
+                child: this.createGrid(rowCount),
                 mask: { mask: true, padding: 1 },
             },
             space: { left: 10, right: 10, top: 10, bottom: 10, panel: 10 },
 
-            // We'll create the slider when we don't have enough space anymore
-            // {
-            //     track: this.rexUI.add.roundRectangle(0, 0, 20, 10, 10, Phaser.Display.Color.HexStringToColor(PALETTE.dark).color),
-            //     thumb: this.rexUI.add.roundRectangle(0, 0, 0, 0, 13, Phaser.Display.Color.HexStringToColor(PALETTE.light).color),
-            // }
-            slider: false,
+            slider: shouldScroll ? {
+                track: this.rexUI.add.roundRectangle(0, 0, 20, 10, 10, Phaser.Display.Color.HexStringToColor(PALETTE.dark).color),
+                thumb: this.rexUI.add.roundRectangle(0, 0, 0, 0, 13, Phaser.Display.Color.HexStringToColor(PALETTE.light).color),
+            } : false,
             scroller: false,
 
         }).layout();
@@ -70,9 +81,9 @@ export default class GameScene extends Phaser.Scene {
         // Creates a text label with no background. It's bounded by a circle so the text is well centered
         function createTextLabel(text, fontSize) {
             return scene.rexUI.add.label({
-                width: itemWidth,
-                height: itemWidth,
-                background: scene.add.circle(0, 0, circleRadius, Phaser.Display.Color.HexStringToColor(PALETTE.background).color),
+                width: ITEM_WIDTH,
+                height: ITEM_WIDTH,
+                background: scene.add.circle(0, 0, CIRCLE_RADIUS, Phaser.Display.Color.HexStringToColor(PALETTE.background).color),
                 text: scene.add.text(0, 0, text, {
                     color: PALETTE.medium,
                     fontSize: fontSize,
@@ -85,41 +96,46 @@ export default class GameScene extends Phaser.Scene {
 
         var sizer = this.rexUI.add.fixWidthSizer({
             // Space for circle + Space for result sheet + Space for line number + Space for submit button
-            width: (itemWidth + spaceBetweenItems) * this.circleCount + 120 + (itemWidth + 20) * 2,
+            width: (ITEM_WIDTH + SPACE_BETWEEN_ITEMS) * this.circleCount + 120 + (ITEM_WIDTH + 20) * 2,
             orientation: 0,
             space: {
                 left: 0, right: 0, top: 0, bottom: 0,
-                item: spaceBetweenItems, line: spaceBetweenLines
+                item: SPACE_BETWEEN_ITEMS, line: SPACE_BETWEEN_LINES
             },
         });
 
+
+
         for (var i = rowCount - 1; i >= 0; i--) {
             // Line number
-            sizer.add(createTextLabel(`${i + 1}`, circleRadius * 1.5));
+            sizer.add(createTextLabel(`${i + 1}`, CIRCLE_RADIUS * 1.5));
 
             // Game circles
             for (var j = 0; j < this.circleCount; j++) {
-                var circle = this.add.circle(0, 0, circleRadius, Phaser.Display.Color.HexStringToColor(PALETTE.emptyCirle).color).setStrokeStyle(1, PALETTE.dark);
+                var circle = this.add.circle(0, 0, CIRCLE_RADIUS, Phaser.Display.Color.HexStringToColor(PALETTE.emptyCirle).color).setStrokeStyle(1, PALETTE.dark);
                 if (this.currentRow == i) {
                     circle.setInteractive().on("pointerdown", (function (parent) {
                         return function () {
                             if (scene.currentDialog !== undefined) {
                                 return;
                             }
+
+                            function destroyCurrentDialog() {
+                                FadeOutDestroy(scene.currentDialogBackground, 100);
+                                scene.currentDialog.scaleDownDestroy(100);
+                                scene.currentDialog = undefined;
+                            }
+
                             // Darken the screen. When clicking that background, kill the dialog
                             scene.currentDialogBackground = scene.add.rectangle(scene.cameras.main.width / 2, scene.cameras.main.height / 2, scene.cameras.main.width, scene.cameras.main.height, 0x000000, 0.75)
                                 .setInteractive().on("pointerdown", function (pointer) {
                                     if (!scene.currentDialog.isInTouching(pointer)) {
-                                        FadeOutDestroy(scene.currentDialogBackground, 100);
-                                        scene.currentDialog.scaleDownDestroy(100);
-                                        scene.currentDialog = undefined;
+                                        destroyCurrentDialog();
                                     }
                                 });
                             scene.currentDialog = scene.createColorSelectionDialog(this.x, this.y, function (color) {
                                 parent.setFillStyle(color);
-                                FadeOutDestroy(scene.currentDialogBackground, 100);
-                                scene.currentDialog.scaleDownDestroy(100);
-                                scene.currentDialog = undefined;
+                                destroyCurrentDialog();
                             });
                         }
                     })(circle));
@@ -130,13 +146,17 @@ export default class GameScene extends Phaser.Scene {
             // Submit button
             sizer.add(
                 this.currentRow == i ?
-                    createTextLabel("✔️", circleRadius) :
-                    createTextLabel("", circleRadius)
+                    createTextLabel("✔️", CIRCLE_RADIUS).setInteractive().on("pointerdown", function () {
+                        scene.currentRow += 1;
+                        // This is in no way efficient. The whole board is being redrawn every time. ¯\_(ツ)_/¯
+                        scene.drawPanel(Math.max(rowCount, scene.currentRow + 2));
+                    }) :
+                    createTextLabel("", CIRCLE_RADIUS)
             );
 
             // Result sheet
             sizer.add(
-                this.rexUI.add.roundRectangle(0, 0, 100, itemWidth, 10, Phaser.Display.Color.HexStringToColor(PALETTE.light).color)
+                this.rexUI.add.roundRectangle(0, 0, 100, ITEM_WIDTH, 10, Phaser.Display.Color.HexStringToColor(PALETTE.light).color)
             );
         }
         return sizer
