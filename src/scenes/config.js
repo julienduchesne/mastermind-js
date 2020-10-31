@@ -1,6 +1,7 @@
 import toHex from "colornames";
 import {
     CIRCLE_COLORS,
+    CIRCLE_COLOR_NUMBERS,
     PALETTE
 } from "../colors";
 
@@ -21,7 +22,7 @@ export default class ConfigScene extends Phaser.Scene {
     drawCircles(count, x, y, width, colors = true) {
         var group = this.add.group();
         for (var i = 0; i < count; i++) {
-            var color = Phaser.Display.Color.HexStringToColor(colors ? CIRCLE_COLORS[i] : toHex("white")).color;
+            var color = colors ? CIRCLE_COLOR_NUMBERS[i] : 0xffffff;
             group.add(this.add.circle(x + i * 20, y, 20, color).setStrokeStyle(2, toHex("black")).setAlpha(1));
         }
         x += (width / count) / 2;

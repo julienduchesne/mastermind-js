@@ -1,3 +1,5 @@
+
+
 export const PALETTE = {
     background: "#e8ded2",
     light: "#a3d2ca",
@@ -6,6 +8,10 @@ export const PALETTE = {
     emptyCirle: "#d3d3d3"
 };
 
+export const PALETTE_NUMBERS = Object.fromEntries(
+    Object.entries(PALETTE)
+        .map(([key, val]) => [key, Phaser.Display.Color.HexStringToColor(val).color])
+);
 
 export const CIRCLE_COLORS = [
     "#fe5e5e",
@@ -21,3 +27,5 @@ export const CIRCLE_COLORS = [
     "#aaaaaa",
     "#e9e9cb"
 ];
+
+export const CIRCLE_COLOR_NUMBERS = CIRCLE_COLORS.map(color => Phaser.Display.Color.HexStringToColor(color).color);

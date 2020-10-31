@@ -1,6 +1,7 @@
 import toHex from "colornames";
 import {
     CIRCLE_COLORS,
+    CIRCLE_COLOR_NUMBERS,
     PALETTE
 } from "../colors";
 
@@ -26,7 +27,7 @@ export default class SplashScene extends Phaser.Scene {
         this.halfWidth = this.cameras.main.width / 2;
         this.centerPoint = new Phaser.Geom.Point(this.halfWidth);
         for (var i = 0; i < 40; i++) {
-            var color = Phaser.Display.Color.HexStringToColor(CIRCLE_COLORS[i % CIRCLE_COLORS.length]).color;
+            var color = CIRCLE_COLOR_NUMBERS[i % CIRCLE_COLOR_NUMBERS.length];
             this.ballGroup.add(this.add.circle(0, 0, 20, color).setStrokeStyle(2, toHex("black")).setAlpha(1));
         }
         var circle = new Phaser.Geom.Circle(this.halfWidth, this.halfWidth, this.circleRadius);

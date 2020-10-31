@@ -4,7 +4,8 @@ import GameScene from "./scenes/game";
 import SplashScene from "./scenes/splash";
 import {
   CIRCLE_COLORS,
-  PALETTE
+  PALETTE,
+  PALETTE_NUMBERS
 } from "./colors";
 
 import InputTextPlugin from 'phaser3-rex-plugins/plugins/inputtext-plugin.js';
@@ -16,7 +17,7 @@ const config = {
   url: "https://julienduchesne.github.io/mastermind-phaser/",
 
   type: Phaser.AUTO,
-  backgroundColor: Phaser.Display.Color.HexStringToColor(PALETTE.background),
+  backgroundColor: PALETTE.background,
   disableContextMenu: true,
   dom: {
     createContainer: false
