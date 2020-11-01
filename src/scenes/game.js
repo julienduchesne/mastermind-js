@@ -27,14 +27,14 @@ export default class GameScene extends Phaser.Scene {
             this.add.text(0, 0, 'Restart').setColor(PALETTE.dark).setFontSize(52).setFontFamily('Bangers')
                 .setPadding(10, 10)
                 .setInteractive()
-                .on('pointerdown', () => { this.scene.scene.start('ConfigScene', {}); }),
+                .on('pointerdown', () => { this.scene.start('ConfigScene', {}); }),
             { left: 'left+50', top: 'top+10' },
         );
         this.plugins.get('rexAnchor').add(
             this.add.text(0, 0, 'Guess for me').setColor(PALETTE.dark).setFontSize(52).setFontFamily('Bangers')
                 .setPadding(10, 10)
                 .setInteractive()
-                .on('pointerdown', () => { alert('Not implemented'); }),
+                .on('pointerdown', () => { this.gameState.calculateNextMove(); this.drawPanel(); }),
             { right: 'right-50', top: 'top+10' },
         );
 
@@ -47,7 +47,7 @@ export default class GameScene extends Phaser.Scene {
         }
 
         const numberOfInitialRows = Math.floor(((this.cameras.main.height - 100) / ROW_HEIGHT));
-        const rowCount = Math.max(numberOfInitialRows, this.gameState.currentRow + 2);
+        const rowCount = Math.max(numberOfInitialRows, this.gameState.getCurrentRow() + 2);
         const shouldScroll = rowCount > numberOfInitialRows;
 
         this.scrollablePanel = this.rexUI.add.scrollablePanel({
@@ -114,13 +114,13 @@ export default class GameScene extends Phaser.Scene {
         const currentRowCircles = [];
 
         for (let i = rowCount - 1; i >= 0; i -= 1) {
-            const isCurrentRow = this.gameState.currentRow === i;
+            const isCurrentRow = this.gameState.getCurrentRow() === i;
             // Line number
             sizer.add(createTextLabel(`${i + 1}`, CIRCLE_RADIUS * 1.5));
 
             // Game circles
             for (let j = 0; j < this.gameState.circleCount; j += 1) {
-                const circleColor = i < this.gameState.currentRow
+                const circleColor = i < this.gameState.getCurrentRow()
                     ? this.gameState.lines[i][j]
                     : PALETTE_NUMBERS.emptyCircle;
 
@@ -163,7 +163,7 @@ export default class GameScene extends Phaser.Scene {
 
             // Submit button
             sizer.add(
-                this.gameState.currentRow === i
+                this.gameState.getCurrentRow() === i
                     ? createTextLabel('✔️', CIRCLE_RADIUS).setInteractive().on('pointerdown', () => {
                         const circleColors = currentRowCircles.map((circle) => circle.fillColor);
                         if (scene.gameState.submitRow(circleColors)) {
