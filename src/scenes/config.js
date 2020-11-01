@@ -1,4 +1,3 @@
-import toHex from 'colornames';
 import Phaser from 'phaser';
 import {
     CIRCLE_COLOR_NUMBERS,
@@ -22,9 +21,9 @@ export default class ConfigScene extends Phaser.Scene {
         const group = this.add.group();
         for (let i = 0; i < count; i += 1) {
             const color = colors ? CIRCLE_COLOR_NUMBERS[i] : 0xffffff;
-            group.add(this.add.circle(x + i * 20, y, 20, color).setStrokeStyle(2, toHex('black')).setAlpha(1));
+            group.add(this.add.circle(x + i * 20, y, 20, color)
+                .setStrokeStyle(2, 0x000000).setAlpha(1));
         }
-        x += (width / count) / 2;
         const halfWidth = width / 2;
         const line = new Phaser.Geom.Line(x - halfWidth, y, x + halfWidth, y);
         Phaser.Actions.PlaceOnLine(group.getChildren(), line);
@@ -33,6 +32,7 @@ export default class ConfigScene extends Phaser.Scene {
 
     addCountConfig(y, text, defaultValue, min, max, coloredCircled) {
         const scene = this;
+        const centerX = scene.cameras.main.width / 2;
 
         // Number of colors
         this.configText(150, y, text);
@@ -44,7 +44,7 @@ export default class ConfigScene extends Phaser.Scene {
             if (circles) {
                 circles.destroy(true);
             }
-            circles = scene.drawCircles(newCount, scene.cameras.main.width / 2, y + 75, newCount * 50, coloredCircled);
+            circles = scene.drawCircles(newCount, centerX, y + 75, newCount * 50, coloredCircled);
         };
         this.configText(600, y, '◀').setInteractive().on('pointerdown', getChangeColorCount(-1));
         this.configText(700, y, '▶').setInteractive().on('pointerdown', getChangeColorCount(+1)).emit('pointerdown');
@@ -53,6 +53,8 @@ export default class ConfigScene extends Phaser.Scene {
     }
 
     create() {
+        const scene = this;
+
         const halfWidth = this.cameras.main.width / 2;
         this.add.text(halfWidth, 100, 'Configuration').setColor(PALETTE.dark).setFontSize(52).setOrigin(0.5)
             .setFontFamily('Bangers')
@@ -65,8 +67,8 @@ export default class ConfigScene extends Phaser.Scene {
             .setColor(PALETTE.dark)
             .setOrigin(0.5)
             .setInteractive()
-            .on('pointerdown', function () {
-                this.scene.scene.start('GameScene', { colorCount: parseInt(colorCountText.text, 10), circleCount: parseInt(circleCountText.text, 10) });
+            .on('pointerdown', () => {
+                scene.scene.start('GameScene', { colorCount: parseInt(colorCountText.text, 10), circleCount: parseInt(circleCountText.text, 10) });
             });
     }
 }

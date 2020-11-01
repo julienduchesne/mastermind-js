@@ -36,8 +36,6 @@
     "webpack-merge": "^4.2.2"
   },
   "dependencies": {
-    "colornames": "^1.1.1",
-    "distinct-colors": "^3.0.0",
     "phaser": "^3.24.1",
     "phaser3-rex-plugins": "^1.1.31"
   }

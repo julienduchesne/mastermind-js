@@ -1,11 +1,12 @@
 import Phaser from 'phaser';
+import AnchorPlugin from 'phaser3-rex-plugins/plugins/anchor-plugin';
 import InputTextPlugin from 'phaser3-rex-plugins/plugins/inputtext-plugin';
-import UIPlugin from 'phaser3-rex-plugins/templates/ui/ui-plugin';
 import WebFontLoaderPlugin from 'phaser3-rex-plugins/plugins/webfontloader-plugin';
+import UIPlugin from 'phaser3-rex-plugins/templates/ui/ui-plugin';
+import { PALETTE } from './colors';
 import ConfigScene from './scenes/config';
 import GameScene from './scenes/game';
 import SplashScene from './scenes/splash';
-import { PALETTE } from './colors';
 
 const config = {
     title: 'Mastermind Phaser',
@@ -19,6 +20,11 @@ const config = {
     },
     plugins: {
         global: [
+            {
+                key: 'rexAnchor',
+                plugin: AnchorPlugin,
+                start: true,
+            },
             {
                 key: 'rexInputTextPlugin',
                 plugin: InputTextPlugin,

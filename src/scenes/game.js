@@ -1,6 +1,5 @@
-import Anchor from 'phaser3-rex-plugins/plugins/anchor.js';
-import FadeOutDestroy from 'phaser3-rex-plugins/plugins/fade-out-destroy.js';
 import Phaser from 'phaser';
+import FadeOutDestroy from 'phaser3-rex-plugins/plugins/fade-out-destroy';
 import {
     PALETTE,
     PALETTE_NUMBERS,
@@ -19,18 +18,19 @@ export default class GameScene extends Phaser.Scene {
     }
 
     preload() {
-        this.gameState = new GameState(this.scene.settings.data.colorCount, this.scene.settings.data.circleCount);
+        this.gameState = new GameState(this.scene.settings.data.colorCount,
+            this.scene.settings.data.circleCount);
     }
 
     create() {
-        new Anchor(
+        this.plugins.get('rexAnchor').add(
             this.add.text(0, 0, 'Restart').setColor(PALETTE.dark).setFontSize(52).setFontFamily('Bangers')
                 .setPadding(10, 10)
                 .setInteractive()
-                .on('pointerdown', function () { this.scene.scene.start('ConfigScene', {}); }),
+                .on('pointerdown', () => { this.scene.scene.start('ConfigScene', {}); }),
             { left: 'left+50', top: 'top+10' },
         );
-        new Anchor(
+        this.plugins.get('rexAnchor').add(
             this.add.text(0, 0, 'Guess for me').setColor(PALETTE.dark).setFontSize(52).setFontFamily('Bangers')
                 .setPadding(10, 10)
                 .setInteractive()
@@ -38,18 +38,16 @@ export default class GameScene extends Phaser.Scene {
             { right: 'right-50', top: 'top+10' },
         );
 
-        this.drawPanel(null);
+        this.drawPanel();
     }
 
-    drawPanel(rowCount) {
+    drawPanel() {
         if (this.scrollablePanel !== undefined) {
             this.scrollablePanel.destroy();
         }
 
         const numberOfInitialRows = Math.floor(((this.cameras.main.height - 100) / ROW_HEIGHT));
-        if (rowCount == null) {
-            rowCount = numberOfInitialRows;
-        }
+        const rowCount = Math.max(numberOfInitialRows, this.gameState.currentRow + 2);
         const shouldScroll = rowCount > numberOfInitialRows;
 
         this.scrollablePanel = this.rexUI.add.scrollablePanel({
@@ -80,7 +78,7 @@ export default class GameScene extends Phaser.Scene {
     createGrid(rowCount) {
         const scene = this;
 
-        // Creates a text label with no background. It's bounded by a circle so the text is well centered
+        // Creates a text label with no background. It's bounded by a circle so the text is centered
         function createTextLabel(text, fontSize) {
             return scene.rexUI.add.label({
                 width: ITEM_WIDTH,
@@ -99,8 +97,9 @@ export default class GameScene extends Phaser.Scene {
         }
 
         const sizer = this.rexUI.add.fixWidthSizer({
-            // Space for circle + Space for result sheet + Space for line number + Space for submit button
-            width: (ITEM_WIDTH + SPACE_BETWEEN_ITEMS) * this.gameState.circleCount + 120 + (ITEM_WIDTH + 20) * 2,
+            // Space for circle + result sheet + line number + submit button
+            width: (ITEM_WIDTH + SPACE_BETWEEN_ITEMS) * this.gameState.circleCount
+            + 120 + (ITEM_WIDTH + 20) * 2,
             orientation: 0,
             space: {
                 left: 0,
@@ -121,36 +120,43 @@ export default class GameScene extends Phaser.Scene {
 
             // Game circles
             for (let j = 0; j < this.gameState.circleCount; j += 1) {
-                const circleColor = i < this.gameState.currentRow ? this.gameState.lines[i][j] : PALETTE_NUMBERS.emptyCircle;
+                const circleColor = i < this.gameState.currentRow
+                    ? this.gameState.lines[i][j]
+                    : PALETTE_NUMBERS.emptyCircle;
 
-                const circle = this.add.circle(0, 0, CIRCLE_RADIUS, circleColor).setStrokeStyle(1, PALETTE.dark);
+                const circle = this.add.circle(0, 0, CIRCLE_RADIUS, circleColor)
+                    .setStrokeStyle(1, PALETTE.dark);
                 if (isCurrentRow) {
                     currentRowCircles.push(circle);
-                    circle.setInteractive().on('pointerdown', (function (parent) {
-                        return function () {
-                            if (scene.currentDialog !== undefined) {
-                                return;
-                            }
+                    circle.setInteractive().on('pointerdown', ((parent) => () => {
+                        if (scene.currentDialog !== undefined) {
+                            return;
+                        }
 
-                            function destroyCurrentDialog() {
-                                FadeOutDestroy(scene.currentDialogBackground, 100);
-                                scene.currentDialog.scaleDownDestroy(100);
-                                scene.currentDialog = undefined;
-                            }
+                        function destroyCurrentDialog() {
+                            FadeOutDestroy(scene.currentDialogBackground, 100);
+                            scene.currentDialog.scaleDownDestroy(100);
+                            scene.currentDialog = undefined;
+                        }
 
-                            // Darken the screen with a background rectangle. When clicking that background, kill the dialog
-                            scene.currentDialogBackground = scene.add.rectangle(scene.cameras.main.width / 2, scene.cameras.main.height / 2, scene.cameras.main.width, scene.cameras.main.height, 0x000000, 0.75)
-                                .setInteractive().on('pointerdown', (pointer) => {
-                                    if (!scene.currentDialog.isInTouching(pointer)) {
-                                        destroyCurrentDialog();
-                                    }
-                                });
-                            scene.currentDialog = scene.createColorSelectionDialog(this.x, this.y, (color) => {
+                        // Darken the screen with a background rectangle
+                        // When clicking that background, kill the dialog
+                        scene.currentDialogBackground = scene.add.rectangle(
+                            scene.cameras.main.width / 2, scene.cameras.main.height / 2,
+                            scene.cameras.main.width, scene.cameras.main.height, 0x000000, 0.75,
+                        )
+                            .setInteractive().on('pointerdown', (pointer) => {
+                                if (!scene.currentDialog.isInTouching(pointer)) {
+                                    destroyCurrentDialog();
+                                }
+                            });
+                        scene.currentDialog = scene.createColorSelectionDialog(
+                            parent.x, parent.y, (color) => {
                                 parent.setFillStyle(color);
                                 destroyCurrentDialog();
-                            });
-                        };
-                    }(circle)));
+                            },
+                        );
+                    })(circle));
                 }
                 sizer.add(circle);
             }
@@ -159,9 +165,11 @@ export default class GameScene extends Phaser.Scene {
             sizer.add(
                 this.gameState.currentRow === i
                     ? createTextLabel('✔️', CIRCLE_RADIUS).setInteractive().on('pointerdown', () => {
-                        if (scene.gameState.submitRow(currentRowCircles.map((circle) => circle.fillColor))) {
-                            // This is in no way efficient. The whole board is being redrawn every time. ¯\_(ツ)_/¯
-                            scene.drawPanel(Math.max(rowCount, scene.gameState.currentRow + 2));
+                        const circleColors = currentRowCircles.map((circle) => circle.fillColor);
+                        if (scene.gameState.submitRow(circleColors)) {
+                            // This is in no way efficient
+                            // The whole board is being redrawn every time. ¯\_(ツ)_/¯
+                            scene.drawPanel();
                         }
                     })
                     : createTextLabel('', CIRCLE_RADIUS),
@@ -181,7 +189,8 @@ export default class GameScene extends Phaser.Scene {
             x,
             y,
 
-            background: this.rexUI.add.roundRectangle(0, 0, 100, 100, 20, PALETTE_NUMBERS.background),
+            background: this.rexUI.add.roundRectangle(0, 0, 100, 100, 20,
+                PALETTE_NUMBERS.background),
 
             title: this.rexUI.add.label({
                 text: this.add.text(0, 0, 'Pick a color ', {
@@ -197,13 +206,13 @@ export default class GameScene extends Phaser.Scene {
                 },
             }),
 
-            actions: (function (colors) {
+            actions: ((colors) => {
                 const colorCircles = [];
-                for (let i = 0; i < colors.length; i++) {
+                for (let i = 0; i < colors.length; i += 1) {
                     colorCircles.push(scene.add.circle(0, 0, 20, colors[i]));
                 }
                 return colorCircles;
-            }(this.gameState.colors)),
+            })(this.gameState.colors),
 
             actionsAlign: 'left',
 
@@ -222,13 +231,13 @@ export default class GameScene extends Phaser.Scene {
             .popUp(500);
 
         dialog
-            .on('button.click', (button, groupName, index) => {
+            .on('button.click', (button) => {
                 onClick(button.fillColor);
             })
-            .on('button.over', (button, groupName, index) => {
+            .on('button.over', (button) => {
                 button.setStrokeStyle(2, 0xffffff);
             })
-            .on('button.out', (button, groupName, index) => {
+            .on('button.out', (button) => {
                 button.setStrokeStyle();
             });
 

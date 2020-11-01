@@ -28,4 +28,6 @@ export const CIRCLE_COLORS = [
     '#e9e9cb',
 ];
 
-export const CIRCLE_COLOR_NUMBERS = CIRCLE_COLORS.map((color) => Phaser.Display.Color.HexStringToColor(color).color);
+export const CIRCLE_COLOR_NUMBERS = CIRCLE_COLORS.map(
+    (color) => Phaser.Display.Color.HexStringToColor(color).color,
+);

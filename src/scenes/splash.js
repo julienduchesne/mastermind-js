@@ -1,4 +1,3 @@
-import toHex from 'colornames';
 import Phaser from 'phaser';
 import {
     CIRCLE_COLOR_NUMBERS,
@@ -20,6 +19,8 @@ export default class SplashScene extends Phaser.Scene {
     }
 
     create() {
+        const scene = this;
+
         // Create circle of balls
         this.ballGroup = this.add.group();
         this.circleRadius = 350;
@@ -27,7 +28,8 @@ export default class SplashScene extends Phaser.Scene {
         this.centerPoint = new Phaser.Geom.Point(this.halfWidth);
         for (let i = 0; i < 40; i += 1) {
             const color = CIRCLE_COLOR_NUMBERS[i % CIRCLE_COLOR_NUMBERS.length];
-            this.ballGroup.add(this.add.circle(0, 0, 20, color).setStrokeStyle(2, toHex('black')).setAlpha(1));
+            this.ballGroup.add(this.add.circle(0, 0, 20, color)
+                .setStrokeStyle(2, 0x000000).setAlpha(1));
         }
         const circle = new Phaser.Geom.Circle(this.halfWidth, this.halfWidth, this.circleRadius);
         Phaser.Actions.PlaceOnCircle(this.ballGroup.getChildren(), circle);
@@ -48,12 +50,14 @@ export default class SplashScene extends Phaser.Scene {
             yoyo: true,
         });
 
-        this.input.on('pointerdown', function () {
-            this.scene.scene.start('ConfigScene', {});
+        this.input.on('pointerdown', () => {
+            scene.scene.start('ConfigScene', {});
         });
     }
 
     update() {
-        Phaser.Actions.RotateAroundDistance(this.ballGroup.getChildren(), this.centerPoint, 0.005, this.circleRadius);
+        Phaser.Actions.RotateAroundDistance(
+            this.ballGroup.getChildren(), this.centerPoint, 0.005, this.circleRadius,
+        );
     }
 }
