@@ -14,8 +14,25 @@ function choose(choices) {
     return choices[index];
 }
 
-function getLineResults(line, solution) {
-    return [];
+export function getLineResults(line, solution) {
+    if (line.length !== solution.length) {
+        throw new Error("The line and solution don't have the same length");
+    }
+    const results = [];
+    const matchIndexes = new Set();
+    // Check for full matches
+    for (let i = 0; i < line.length; i += 1) {
+        if (line[i] === solution[i]) {
+            matchIndexes.add(i);
+            results.push(result.FULL_MATCH);
+        }
+    }
+
+    // Add missing no matches
+    while (results.length < solution.length) {
+        results.push(result.NO_MATCH);
+    }
+    return results;
 }
 
 export default class GameState {

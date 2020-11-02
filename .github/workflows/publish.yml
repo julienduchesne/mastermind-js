@@ -16,8 +16,11 @@ jobs:
           npm install
           npm run build
 
-      - name: Run ESLint 🧪
+      - name: Run ESLint 🧹
         run: npx eslint src
+
+      - name: Run Jest 🧪
+        run: npx jest
 
       - name: Deploy 🚀
         uses: JamesIves/github-pages-deploy-action@3.7.1
