@@ -4,7 +4,7 @@ import {
     PALETTE,
     PALETTE_NUMBERS,
 } from '../colors';
-import GameState from '../gameState';
+import GameState, { result } from '../gameState';
 
 const SPACE_BETWEEN_ITEMS = 20;
 const SPACE_BETWEEN_LINES = 40;
@@ -114,13 +114,14 @@ export default class GameScene extends Phaser.Scene {
         const currentRowCircles = [];
 
         for (let i = rowCount - 1; i >= 0; i -= 1) {
+            const isPastRow = i < this.gameState.getCurrentRow();
             const isCurrentRow = this.gameState.getCurrentRow() === i;
             // Line number
             sizer.add(createTextLabel(`${i + 1}`, CIRCLE_RADIUS * 1.5));
 
             // Game circles
             for (let j = 0; j < this.gameState.circleCount; j += 1) {
-                const circleColor = i < this.gameState.getCurrentRow()
+                const circleColor = isPastRow
                     ? this.gameState.lines[i][j]
                     : PALETTE_NUMBERS.emptyCircle;
 
@@ -176,8 +177,26 @@ export default class GameScene extends Phaser.Scene {
             );
 
             // Result sheet
+            const results = isPastRow ? this.gameState.calculateResults()[i] : [];
+            const ok = results.filter((x) => x === result.FULL_MATCH).length;
+            const colorOk = results.filter((x) => x === result.COLOR_MATCH).length;
             sizer.add(
-                this.rexUI.add.roundRectangle(0, 0, 100, ITEM_WIDTH, 10, PALETTE_NUMBERS.light),
+                this.rexUI.add.label({
+                    width: 100,
+                    height: ITEM_WIDTH,
+                    background: this.rexUI.add.roundRectangle(0, 0, 100, ITEM_WIDTH, 10,
+                        PALETTE_NUMBERS.light),
+                    text: scene.add.text(0, 0, `${ok}-${colorOk}`, {
+                        color: PALETTE.medium,
+                        fontSize: 30,
+                        fontFamily: 'Bangers',
+                        padding: {
+                            left: 5, right: 5, top: 5, bottom: 5,
+                        },
+                    }),
+                    align: 'center',
+                })
+                ,
             );
         }
         return sizer;
