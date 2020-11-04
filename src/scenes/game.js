@@ -24,6 +24,7 @@ export default class GameScene extends Phaser.Scene {
     }
 
     create() {
+        this.textMetrics = {};
         this.plugins.get('rexAnchor').add(
             this.add.text(0, 0, 'Restart').setColor(PALETTE.dark).setFontSize(52).setFontFamily('Bangers')
                 .setPadding(10, 10)
@@ -212,7 +213,7 @@ export default class GameScene extends Phaser.Scene {
 
     // Creates a text label with no background. It's bounded by a circle so the text is centered
     createTextLabel(text, fontSize) {
-        return this.rexUI.add.label({
+        const label = this.rexUI.add.label({
             width: ITEM_WIDTH,
             height: ITEM_WIDTH,
             background: this.add.circle(0, 0, CIRCLE_RADIUS, PALETTE_NUMBERS.background),
@@ -223,9 +224,14 @@ export default class GameScene extends Phaser.Scene {
                 padding: {
                     left: 5, right: 5, top: 5, bottom: 5,
                 },
+                metrics: this.textMetrics[fontSize],
             }),
             align: 'center',
         });
+        if (this.textMetrics[fontSize] === undefined) {
+            this.textMetrics[fontSize] = label.childrenMap.text.getTextMetrics();
+        }
+        return label;
     }
 
     createColorSelectionDialog(x, y, onClick) {
@@ -242,6 +248,7 @@ export default class GameScene extends Phaser.Scene {
                     fontSize: 30,
                     fontFamily: 'Bangers',
                     color: PALETTE.dark,
+                    metrics: this.textMetrics[30],
                 }),
                 space: {
                     left: 15,
