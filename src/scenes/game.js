@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import FadeOutDestroy from 'phaser3-rex-plugins/plugins/fade-out-destroy';
 import {
+    CIRCLE_COLOR_NUMBERS,
     PALETTE,
     PALETTE_NUMBERS,
 } from '../colors';
@@ -34,7 +35,11 @@ export default class GameScene extends Phaser.Scene {
             this.add.text(0, 0, 'Guess for me').setColor(PALETTE.dark).setFontSize(52).setFontFamily('Bangers')
                 .setPadding(10, 10)
                 .setInteractive()
-                .on('pointerdown', () => { this.gameState.calculateNextMove(); this.drawPanel(); }),
+                .on('pointerdown', () => {
+                    if (this.gameState.solutionFound()) { return; }
+                    this.gameState.calculateNextMove();
+                    this.drawPanel();
+                }),
             { right: 'right-50', top: 'top+10' },
         );
 
@@ -73,29 +78,24 @@ export default class GameScene extends Phaser.Scene {
             scroller: false,
 
         }).layout();
+
+        // Game won text
+        if (this.gameState.solutionFound()) {
+            const winTextGroup = this.add.group();
+            winTextGroup.add(this.add.rectangle(
+                this.cameras.main.width / 2, this.cameras.main.height / 2,
+                this.cameras.main.width, this.cameras.main.height, 0x000000, 0.75,
+            ).setInteractive().on('pointerdown', () => { winTextGroup.destroy(true); }));
+            const winText = this.add.text(0, 0, 'You have won! Click to continue!').setColor(PALETTE.light)
+                .setFontSize(52).setFontFamily('Bangers')
+                .setPadding(10, 10);
+            winTextGroup.add(winText);
+            this.plugins.get('rexAnchor').add(winText, { centerX: 'center', centerY: 'center' });
+        }
     }
 
     createGrid(rowCount) {
         const scene = this;
-
-        // Creates a text label with no background. It's bounded by a circle so the text is centered
-        function createTextLabel(text, fontSize) {
-            return scene.rexUI.add.label({
-                width: ITEM_WIDTH,
-                height: ITEM_WIDTH,
-                background: scene.add.circle(0, 0, CIRCLE_RADIUS, PALETTE_NUMBERS.background),
-                text: scene.add.text(0, 0, text, {
-                    color: PALETTE.medium,
-                    fontSize,
-                    fontFamily: 'Bangers',
-                    padding: {
-                        left: 5, right: 5, top: 5, bottom: 5,
-                    },
-                }),
-                align: 'center',
-            });
-        }
-
         const sizer = this.rexUI.add.fixWidthSizer({
             // Space for circle + result sheet + line number + submit button
             width: (ITEM_WIDTH + SPACE_BETWEEN_ITEMS) * this.gameState.circleCount
@@ -117,7 +117,7 @@ export default class GameScene extends Phaser.Scene {
             const isPastRow = i < this.gameState.getCurrentRow();
             const isCurrentRow = this.gameState.getCurrentRow() === i;
             // Line number
-            sizer.add(createTextLabel(`${i + 1}`, CIRCLE_RADIUS * 1.5));
+            sizer.add(scene.createTextLabel(`${i + 1}`, CIRCLE_RADIUS * 1.5));
 
             // Game circles
             for (let j = 0; j < this.gameState.circleCount; j += 1) {
@@ -130,6 +130,10 @@ export default class GameScene extends Phaser.Scene {
                 if (isCurrentRow) {
                     currentRowCircles.push(circle);
                     circle.setInteractive().on('pointerdown', ((parent) => () => {
+                        if (scene.gameState.solutionFound()) {
+                            return;
+                        }
+
                         if (scene.currentDialog !== undefined) {
                             return;
                         }
@@ -164,8 +168,8 @@ export default class GameScene extends Phaser.Scene {
 
             // Submit button
             sizer.add(
-                this.gameState.getCurrentRow() === i
-                    ? createTextLabel('✔️', CIRCLE_RADIUS).setInteractive().on('pointerdown', () => {
+                this.gameState.getCurrentRow() === i && !this.gameState.solutionFound()
+                    ? scene.createTextLabel('✔️', CIRCLE_RADIUS).setInteractive().on('pointerdown', () => {
                         const circleColors = currentRowCircles.map((circle) => circle.fillColor);
                         if (scene.gameState.submitRow(circleColors)) {
                             // This is in no way efficient
@@ -173,33 +177,55 @@ export default class GameScene extends Phaser.Scene {
                             scene.drawPanel();
                         }
                     })
-                    : createTextLabel('', CIRCLE_RADIUS),
+                    : scene.add.circle(0, 0, CIRCLE_RADIUS, CIRCLE_COLOR_NUMBERS.background),
             );
 
             // Result sheet
-            const results = isPastRow ? this.gameState.calculateResults()[i] : [];
-            const ok = results.filter((x) => x === result.FULL_MATCH).length;
-            const colorOk = results.filter((x) => x === result.COLOR_MATCH).length;
-            sizer.add(
-                this.rexUI.add.label({
-                    width: 100,
-                    height: ITEM_WIDTH,
-                    background: this.rexUI.add.roundRectangle(0, 0, 100, ITEM_WIDTH, 10,
-                        PALETTE_NUMBERS.light),
-                    text: scene.add.text(0, 0, `${ok}-${colorOk}`, {
-                        color: PALETTE.medium,
-                        fontSize: 30,
-                        fontFamily: 'Bangers',
-                        padding: {
-                            left: 5, right: 5, top: 5, bottom: 5,
-                        },
+            if (isPastRow) {
+                const results = this.gameState.calculateResults()[i];
+                const ok = results.filter((x) => x === result.FULL_MATCH).length;
+                const colorOk = results.filter((x) => x === result.COLOR_MATCH).length;
+                sizer.add(
+                    this.rexUI.add.label({
+                        width: 100,
+                        height: ITEM_WIDTH,
+                        background: this.rexUI.add.roundRectangle(0, 0, 100, ITEM_WIDTH, 10,
+                            PALETTE_NUMBERS.light),
+                        text: scene.add.text(0, 0, `${ok}-${colorOk}`, {
+                            color: PALETTE.medium,
+                            fontSize: 30,
+                            fontFamily: 'Bangers',
+                            padding: {
+                                left: 5, right: 5, top: 5, bottom: 5,
+                            },
+                        }),
+                        align: 'center',
                     }),
-                    align: 'center',
-                })
-                ,
-            );
+                );
+            } else {
+                sizer.add(this.rexUI.add.roundRectangle(0, 0, 100, ITEM_WIDTH, 10,
+                    PALETTE_NUMBERS.background));
+            }
         }
         return sizer;
+    }
+
+    // Creates a text label with no background. It's bounded by a circle so the text is centered
+    createTextLabel(text, fontSize) {
+        return this.rexUI.add.label({
+            width: ITEM_WIDTH,
+            height: ITEM_WIDTH,
+            background: this.add.circle(0, 0, CIRCLE_RADIUS, PALETTE_NUMBERS.background),
+            text: this.add.text(0, 0, text, {
+                color: PALETTE.medium,
+                fontSize,
+                fontFamily: 'Bangers',
+                padding: {
+                    left: 5, right: 5, top: 5, bottom: 5,
+                },
+            }),
+            align: 'center',
+        });
     }
 
     createColorSelectionDialog(x, y, onClick) {

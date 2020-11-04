@@ -87,6 +87,13 @@ export default class GameState {
         return true;
     }
 
+    solutionFound() {
+        if (this.lines.length < 1) {
+            return false;
+        }
+        return this.lines[this.lines.length - 1].toString() === this.solution.toString();
+    }
+
     calculateNextMove() {
         // Random
         this.lines.push(
