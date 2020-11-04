@@ -199,6 +199,7 @@ export default class GameScene extends Phaser.Scene {
                             padding: {
                                 left: 5, right: 5, top: 5, bottom: 5,
                             },
+                            metrics: scene.textMetrics[30],
                         }),
                         align: 'center',
                     }),
