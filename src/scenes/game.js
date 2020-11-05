@@ -100,7 +100,7 @@ export default class GameScene extends Phaser.Scene {
         const sizer = this.rexUI.add.fixWidthSizer({
             // Space for circle + result sheet + line number + submit button
             width: (ITEM_WIDTH + SPACE_BETWEEN_ITEMS) * this.gameState.circleCount
-            + 120 + (ITEM_WIDTH + 20) * 2,
+            + 80 + (ITEM_WIDTH + 20) * 2,
             orientation: 0,
             space: {
                 left: 0,
@@ -183,29 +183,33 @@ export default class GameScene extends Phaser.Scene {
 
             // Result sheet
             if (isPastRow) {
+                const resultsSizer = this.rexUI.add.fixWidthSizer({
+                    width: 60,
+                    height: ITEM_WIDTH,
+                    orientation: 0,
+                    space: {
+                        left: 0,
+                        right: this.gameState.circleCount <= 4 ? 20 : 0,
+                        top: 0,
+                        bottom: 0,
+                        item: 5,
+                        line: 5,
+                    },
+                });
                 const results = this.gameState.calculateResults()[i];
-                const ok = results.filter((x) => x === result.FULL_MATCH).length;
-                const colorOk = results.filter((x) => x === result.COLOR_MATCH).length;
-                sizer.add(
-                    this.rexUI.add.label({
-                        width: 100,
-                        height: ITEM_WIDTH,
-                        background: this.rexUI.add.roundRectangle(0, 0, 100, ITEM_WIDTH, 10,
-                            PALETTE_NUMBERS.light),
-                        text: scene.add.text(0, 0, `${ok}-${colorOk}`, {
-                            color: PALETTE.medium,
-                            fontSize: 30,
-                            fontFamily: 'Bangers',
-                            padding: {
-                                left: 5, right: 5, top: 5, bottom: 5,
-                            },
-                            metrics: scene.textMetrics[30],
-                        }),
-                        align: 'center',
-                    }),
-                );
+                for (let r = 0; r < results.length; r += 1) {
+                    let circleColor = PALETTE_NUMBERS.emptyCircle;
+                    if (results[r] === result.FULL_MATCH) {
+                        circleColor = PALETTE_NUMBERS.fullMatchCircle;
+                    } else if (results[r] === result.COLOR_MATCH) {
+                        circleColor = PALETTE_NUMBERS.colorMatchCircle;
+                    }
+                    resultsSizer.add(this.add.circle(0, 0, 8, circleColor)
+                        .setStrokeStyle(1, PALETTE.dark));
+                }
+                sizer.add(resultsSizer);
             } else {
-                sizer.add(this.rexUI.add.roundRectangle(0, 0, 100, ITEM_WIDTH, 10,
+                sizer.add(this.rexUI.add.roundRectangle(0, 0, 60, ITEM_WIDTH, 10,
                     PALETTE_NUMBERS.background));
             }
         }

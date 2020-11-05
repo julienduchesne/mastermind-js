@@ -6,6 +6,8 @@ export const PALETTE = {
     medium: '#5eaaa8',
     dark: '#056676',
     emptyCircle: '#d3d3d3',
+    fullMatchCircle: '#33cc33',
+    colorMatchCircle: '#ffcc00',
 };
 
 export const PALETTE_NUMBERS = Object.fromEntries(
