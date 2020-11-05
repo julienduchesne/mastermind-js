@@ -19,8 +19,10 @@ export default class GameScene extends Phaser.Scene {
     }
 
     preload() {
-        this.gameState = new GameState(this.scene.settings.data.colorCount,
-            this.scene.settings.data.circleCount);
+        this.gameState = new GameState(
+            CIRCLE_COLOR_NUMBERS.slice(0, this.scene.settings.data.colorCount),
+            this.scene.settings.data.circleCount,
+        );
     }
 
     create() {

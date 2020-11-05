@@ -1,9 +1,4 @@
 import {
-    CIRCLE_COLOR_NUMBERS,
-    PALETTE_NUMBERS,
-} from './colors';
-
-import {
     choose,
 } from './utils';
 
@@ -55,10 +50,9 @@ export function getLineResults(line, solution) {
 }
 
 export default class GameState {
-    constructor(colorCount, circleCount) {
-        this.colorCount = colorCount;
+    constructor(colors, circleCount) {
         this.circleCount = circleCount;
-        this.colors = CIRCLE_COLOR_NUMBERS.slice(0, this.colorCount);
+        this.colors = colors;
         this.solution = [...Array(this.circleCount).keys()].map(
             () => choose(this.colors),
         );
@@ -79,9 +73,13 @@ export default class GameState {
     }
 
     submitRow(colors) {
-        if (colors.indexOf(PALETTE_NUMBERS.emptyCircle) !== -1
-        || colors.length !== this.circleCount) {
+        if (colors.length !== this.circleCount) {
             return false;
+        }
+        for (let i = 0; i < colors.length; i += 1) {
+            if (this.colors.indexOf(colors[i]) === -1) {
+                return false;
+            }
         }
         this.lines.push(colors);
         return true;
@@ -94,12 +92,39 @@ export default class GameState {
         return this.lines[this.lines.length - 1].toString() === this.solution.toString();
     }
 
-    calculateNextMove() {
-        // Random
-        this.lines.push(
-            [...Array(this.circleCount).keys()].map(
-                () => choose(this.colors),
-            ),
-        );
+    calculateNextMove(strategy) {
+        if (this.strategies === undefined) {
+            this.strategies = new Map();
+
+            // Random
+            this.strategies.set('random', () => {
+                this.submitRow(
+                    [...Array(this.circleCount).keys()].map(
+                        () => choose(this.colors),
+                    ),
+                );
+            });
+
+            // Others
+        }
+
+        this.strategies.get(strategy === undefined ? 'random' : strategy)();
     }
+}
+
+// npx babel-node -e "require('./src/gameState.js').calculateBestStrategy()"
+export function calculateBestStrategy() {
+    const results = {};
+    for (let circleCount = 3; circleCount <= 6; circleCount += 1) {
+        for (let colorCount = 3; colorCount <= 5; colorCount += 1) {
+            const gameState = new GameState(
+                [...Array(colorCount).keys()], circleCount,
+            );
+            while (!gameState.solutionFound()) {
+                gameState.calculateNextMove();
+            }
+            results[`Circles: ${circleCount}, Colors: ${colorCount}`] = gameState.lines.length;
+        }
+    }
+    console.log(results);
 }
