@@ -57,6 +57,7 @@ export default class GameState {
             () => choose(this.colors),
         );
         this.lines = [];
+        this.validColors = colors;
     }
 
     getCurrentRow() {
@@ -82,6 +83,13 @@ export default class GameState {
             }
         }
         this.lines.push(colors);
+
+        // Remove invalid colors
+        if (this.calculateResults()[this.results.length - 1].every((v) => v === result.NO_MATCH)) {
+            colors.forEach((invalid) => {
+                this.validColors = this.validColors.filter((c) => c !== invalid);
+            });
+        }
         return true;
     }
 
@@ -92,39 +100,40 @@ export default class GameState {
         return this.lines[this.lines.length - 1].toString() === this.solution.toString();
     }
 
-    calculateNextMove(strategy) {
-        if (this.strategies === undefined) {
-            this.strategies = new Map();
-
-            // Random
-            this.strategies.set('random', () => {
-                this.submitRow(
-                    [...Array(this.circleCount).keys()].map(
-                        () => choose(this.colors),
-                    ),
-                );
-            });
-
-            // Others
-        }
-
-        this.strategies.get(strategy === undefined ? 'random' : strategy)();
-    }
-}
-
-// npx babel-node -e "require('./src/gameState.js').calculateBestStrategy()"
-export function calculateBestStrategy() {
-    const results = {};
-    for (let circleCount = 3; circleCount <= 6; circleCount += 1) {
-        for (let colorCount = 3; colorCount <= 5; colorCount += 1) {
-            const gameState = new GameState(
-                [...Array(colorCount).keys()], circleCount,
+    calculateNextMove() {
+        if (this.lines.length === 0) {
+            this.submitRow(
+                [...Array(this.circleCount).keys()].map(
+                    (i) => (i < this.circleCount / 2 ? this.colors[0] : this.colors[1]),
+                ),
             );
-            while (!gameState.solutionFound()) {
-                gameState.calculateNextMove();
-            }
-            results[`Circles: ${circleCount}, Colors: ${colorCount}`] = gameState.lines.length;
+            return;
         }
+
+        const triedPermutations = [];
+        for (let lineIndex = 0; lineIndex < this.lines.length; lineIndex += 1) {
+            if (this.results[lineIndex].every((v) => v !== result.NO_MATCH)) {
+                triedPermutations.push([...this.lines[lineIndex]]);
+            }
+        }
+
+        if (triedPermutations.length > 0) {
+            let permutation;
+            while (permutation === undefined) {
+                const newPermutation = [...triedPermutations[0]].sort(() => Math.random() - 0.5);
+                if (triedPermutations.every((v) => v.toString() !== newPermutation.toString())
+                ) {
+                    permutation = newPermutation;
+                }
+            }
+            this.submitRow(permutation);
+            return;
+        }
+
+        this.submitRow(
+            [...Array(this.circleCount).keys()].map(
+                () => choose(this.validColors),
+            ),
+        );
     }
-    console.log(results);
 }

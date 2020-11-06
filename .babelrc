@@ -1,7 +1,7 @@
 {
   "presets": [
     [
-      "@babel/presetenv",
+      "@babel/preset-env",
       {
         "targets": {
           "browsers": [

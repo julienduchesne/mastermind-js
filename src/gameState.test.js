@@ -1,5 +1,5 @@
 import { describe, expect, test } from '@jest/globals';
-import { getLineResults, result } from './gameState';
+import GameState, { getLineResults, result } from './gameState';
 import { getRandomInt } from './utils';
 
 describe('getLineResults', () => {
@@ -93,4 +93,23 @@ describe('getLineResults', () => {
             expect(getLineResults(line, solution)).toStrictEqual(expected);
         });
     });
+});
+
+describe('calculateSolution', () => {
+    for (let circleCount = 3; circleCount <= 6; circleCount += 1) {
+        for (let colorCount = 3; colorCount <= 5; colorCount += 1) {
+            test(`Circles: ${circleCount}, Colors: ${colorCount}`, () => {
+                const gameState = new GameState(
+                    [...Array(colorCount).keys()], circleCount,
+                );
+                let tries = 0;
+                while (!gameState.solutionFound() && tries < 10000) {
+                    gameState.calculateNextMove();
+                    tries += 1;
+                }
+                expect(gameState.solutionFound()).toBeTruthy();
+                expect(tries).toBeLessThan(100);
+            });
+        }
+    }
 });
