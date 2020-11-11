@@ -1,3 +1,4 @@
+/* eslint-disable no-continue */
 import {
     choose,
 } from './utils';
@@ -16,47 +17,47 @@ export function getLineResults(line, solution) {
     const lineIndexesHandled = new Set();
     const solutionIndexesHandled = new Set();
 
-    // Check matches
-    for (let solutionIndex = 0; solutionIndex < solution.length; solutionIndex += 1) {
-        if (!solutionIndexesHandled.has(solutionIndex)) {
-            for (let lineIndex = 0; lineIndex < line.length; lineIndex += 1) {
-                // Start at the same index to test full matches first
-                const testIndex = (lineIndex + solutionIndex) % line.length;
-                if (!lineIndexesHandled.has(testIndex)) {
-                    if (line[testIndex] === solution[solutionIndex]) {
-                        lineIndexesHandled.add(testIndex);
-                        solutionIndexesHandled.add(solutionIndex);
-                        results.push(solutionIndex === testIndex
-                            ? result.FULL_MATCH : result.COLOR_MATCH);
-                        break;
-                    }
-                }
-            }
+    // Find full matches
+    solution.forEach((solValue, solIndex) => {
+        if (line[solIndex] === solValue) {
+            lineIndexesHandled.add(solIndex);
+            solutionIndexesHandled.add(solIndex);
+            results.push(result.FULL_MATCH);
         }
-    }
+    });
+
+    // Find partial matches
+    solution.forEach((solValue, solIndex) => {
+        line.forEach((lineValue, lineIndex) => {
+            if (solutionIndexesHandled.has(solIndex) || lineIndexesHandled.has(lineIndex)) return;
+            if (solValue === lineValue) {
+                lineIndexesHandled.add(lineIndex);
+                solutionIndexesHandled.add(solIndex);
+                results.push(result.COLOR_MATCH);
+            }
+        });
+    });
 
     // Add missing no matches
     while (results.length < solution.length) {
         results.push(result.NO_MATCH);
     }
-    return results.sort((a, b) => {
-        if (a === result.FULL_MATCH || b === result.NO_MATCH) {
-            return -1;
-        } if (a === result.NO_MATCH || b === result.FULL_MATCH) {
-            return 1;
-        }
-        return 0;
-    });
+    return results;
+}
+
+function arraysEqual(v1, v2) {
+    return v1.every((v, i) => v2[i] === v);
 }
 
 export default class GameState {
-    constructor(colors, circleCount) {
+    constructor(colors, circleCount, solution) {
         this.circleCount = circleCount;
         this.colors = colors;
-        this.solution = [...Array(this.circleCount).keys()].map(
+        this.solution = solution === undefined ? [...Array(this.circleCount).keys()].map(
             () => choose(this.colors),
-        );
+        ) : solution;
         this.lines = [];
+        this.results = [];
         this.validColors = colors;
     }
 
@@ -65,7 +66,6 @@ export default class GameState {
     }
 
     calculateResults() {
-        this.results = [];
         // Calculate only missing results. Previous lines won't change
         for (let lineIndex = this.results.length; lineIndex < this.lines.length; lineIndex += 1) {
             this.results[lineIndex] = getLineResults(this.lines[lineIndex], this.solution);
@@ -85,7 +85,8 @@ export default class GameState {
         this.lines.push(colors);
 
         // Remove invalid colors
-        if (this.calculateResults()[this.results.length - 1].every((v) => v === result.NO_MATCH)) {
+        const results = this.calculateResults();
+        if (results[results.length - 1].every((v) => v === result.NO_MATCH)) {
             colors.forEach((invalid) => {
                 this.validColors = this.validColors.filter((c) => c !== invalid);
             });
@@ -101,6 +102,7 @@ export default class GameState {
     }
 
     calculateNextMove() {
+        // First line
         if (this.lines.length === 0) {
             this.submitRow(
                 [...Array(this.circleCount).keys()].map(
@@ -110,30 +112,27 @@ export default class GameState {
             return;
         }
 
-        const triedPermutations = [];
-        for (let lineIndex = 0; lineIndex < this.lines.length; lineIndex += 1) {
-            if (this.results[lineIndex].every((v) => v !== result.NO_MATCH)) {
-                triedPermutations.push([...this.lines[lineIndex]]);
+        const results = this.calculateResults();
+        const winningCombination = this.lines
+            .find((line, lineIndex) => results[lineIndex].every((v) => v !== result.NO_MATCH));
+
+        let rowToSubmit;
+        while (rowToSubmit === undefined) {
+            if (winningCombination !== undefined) {
+                // Shuffle winning combination
+                rowToSubmit = [...winningCombination].sort(() => Math.random() - 0.5);
+            } else {
+                // Random
+                rowToSubmit = [...Array(this.circleCount).keys()].map(
+                    () => choose(this.validColors),
+                );
+            }
+
+            const test = [...rowToSubmit];
+            if (this.lines.some(((line) => arraysEqual(line, test)))) {
+                rowToSubmit = undefined;
             }
         }
-
-        if (triedPermutations.length > 0) {
-            let permutation;
-            while (permutation === undefined) {
-                const newPermutation = [...triedPermutations[0]].sort(() => Math.random() - 0.5);
-                if (triedPermutations.every((v) => v.toString() !== newPermutation.toString())
-                ) {
-                    permutation = newPermutation;
-                }
-            }
-            this.submitRow(permutation);
-            return;
-        }
-
-        this.submitRow(
-            [...Array(this.circleCount).keys()].map(
-                () => choose(this.validColors),
-            ),
-        );
+        this.submitRow(rowToSubmit);
     }
 }

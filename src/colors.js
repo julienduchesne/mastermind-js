@@ -20,7 +20,7 @@ export const CIRCLE_COLORS = [
     '#fead5e',
     '#f2ed5d',
     '#b3ff5f',
-    '#5fff80',
+    '#008f39',
     '#5fffe1',
     '#5fcfff',
     '#5f79ff',

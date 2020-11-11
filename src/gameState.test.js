@@ -58,6 +58,7 @@ describe('getLineResults', () => {
             [[1, 2, 3], [0, 2, 0]],
             [[1, 2, 3], [0, 0, 3]],
             [[3, 3, 3], [0, 0, 3]],
+            [[2, 2, 0], [0, 1, 0]],
         ])('with line %s and solution %s', (line, solution) => {
             expect(getLineResults(line, solution))
                 .toStrictEqual([result.FULL_MATCH, result.NO_MATCH, result.NO_MATCH]);
@@ -95,21 +96,23 @@ describe('getLineResults', () => {
     });
 });
 
-describe('calculateSolution', () => {
-    for (let circleCount = 3; circleCount <= 6; circleCount += 1) {
-        for (let colorCount = 3; colorCount <= 5; colorCount += 1) {
-            test(`Circles: ${circleCount}, Colors: ${colorCount}`, () => {
-                const gameState = new GameState(
-                    [...Array(colorCount).keys()], circleCount,
-                );
-                let tries = 0;
-                while (!gameState.solutionFound() && tries < 10000) {
-                    gameState.calculateNextMove();
-                    tries += 1;
-                }
-                expect(gameState.solutionFound()).toBeTruthy();
-                expect(tries).toBeLessThan(100);
-            });
+describe('GameState', () => {
+    describe('fullCalculate', () => {
+        for (let circleCount = 3; circleCount <= 6; circleCount += 1) {
+            for (let colorCount = 3; colorCount <= 5; colorCount += 1) {
+                test(`Circles: ${circleCount}, Colors: ${colorCount}`, () => {
+                    const gameState = new GameState(
+                        [...Array(colorCount).keys()], circleCount,
+                    );
+                    let tries = 0;
+                    while (!gameState.solutionFound() && tries < 10000) {
+                        gameState.calculateNextMove();
+                        tries += 1;
+                    }
+                    expect(gameState.solutionFound()).toBeTruthy();
+                    expect(tries).toBeLessThan(200);
+                });
+            }
         }
-    }
+    });
 });
