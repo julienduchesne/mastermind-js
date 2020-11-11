@@ -101,16 +101,15 @@ describe('GameState', () => {
         for (let circleCount = 3; circleCount <= 6; circleCount += 1) {
             for (let colorCount = 3; colorCount <= 5; colorCount += 1) {
                 test(`Circles: ${circleCount}, Colors: ${colorCount}`, () => {
-                    const gameState = new GameState(
-                        [...Array(colorCount).keys()], circleCount,
-                    );
+                    const colors = Array.from({ length: colorCount }, () => getRandomInt(1000));
+                    const gameState = new GameState(colors, circleCount);
                     let tries = 0;
                     while (!gameState.solutionFound() && tries < 10000) {
                         gameState.calculateNextMove();
                         tries += 1;
                     }
                     expect(gameState.solutionFound()).toBeTruthy();
-                    expect(tries).toBeLessThan(200);
+                    expect(tries).toBeLessThan(20);
                 });
             }
         }

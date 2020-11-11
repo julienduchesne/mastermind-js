@@ -102,6 +102,7 @@ export default class GameState {
     }
 
     calculateNextMove() {
+        const gameState = this;
         // First line
         if (this.lines.length === 0) {
             this.submitRow(
@@ -113,26 +114,43 @@ export default class GameState {
         }
 
         const results = this.calculateResults();
-        const winningCombination = this.lines
-            .find((line, lineIndex) => results[lineIndex].every((v) => v !== result.NO_MATCH));
-
-        let rowToSubmit;
-        while (rowToSubmit === undefined) {
-            if (winningCombination !== undefined) {
-                // Shuffle winning combination
-                rowToSubmit = [...winningCombination].sort(() => Math.random() - 0.5);
-            } else {
-                // Random
-                rowToSubmit = [...Array(this.circleCount).keys()].map(
-                    () => choose(this.validColors),
-                );
-            }
-
-            const test = [...rowToSubmit];
-            if (this.lines.some(((line) => arraysEqual(line, test)))) {
-                rowToSubmit = undefined;
-            }
+        const colors = [...gameState.colors];
+        const colorCount = colors.length;
+        let start = 0;
+        if (this.lastRowSubmitted !== undefined) {
+            this.lastRowSubmitted.forEach((v, i) => {
+                const colorIndex = colors.findIndex((color) => color === v);
+                start += colorIndex * (colorCount ** i);
+            });
+            start += 1;
         }
-        this.submitRow(rowToSubmit);
+        for (let i = start; i < colorCount ** this.circleCount; i += 1) {
+            // Get the row from the index. Simply a base conversion
+            const potentialRow = [...Array(gameState.circleCount).keys()]
+                .map((rowIndex) => {
+                    let colorIndex = i;
+                    if (rowIndex < this.circleCount) {
+                        colorIndex %= (colorCount ** (rowIndex + 1));
+                    }
+                    return colors[Math.floor(colorIndex / (colorCount ** rowIndex))];
+                });
+
+            // Check valid colors
+            if (potentialRow.some((v) => !gameState.validColors.includes(v))) {
+                continue;
+            }
+
+            // Check that the new potential row matches will all past results
+            if (this.lines.some((line, lineIndex) => !arraysEqual(
+                getLineResults(line, potentialRow), results[lineIndex],
+            ))) {
+                continue;
+            }
+
+            // Keeping the last submitted row to not loop the whole thing again
+            this.lastRowSubmitted = [...potentialRow];
+            this.submitRow(potentialRow);
+            return;
+        }
     }
 }
